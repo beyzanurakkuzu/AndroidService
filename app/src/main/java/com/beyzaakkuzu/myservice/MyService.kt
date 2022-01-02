@@ -14,38 +14,36 @@ import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.*
 
 
-class MyService: Service() {
+class MyService : Service() {
     var number: Int? = 0
     private var mBinder: IBinder = MyBinder()
     var Status = MutableLiveData<Int>()
+    var mJob: Job? = null
 
-    companion object{
-        var isServiceRunning:Boolean= false
+    companion object {
+        var isServiceRunning: Boolean = false
     }
+
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate() {
         show_Notification()
-        isServiceRunning= true
+        isServiceRunning = true
     }
 
 
     override fun onStart(intent: Intent?, startid: Int) {
         getShow()
-
         Toast.makeText(this, "Service Started", Toast.LENGTH_LONG).show()
-        GlobalScope.launch {
-            withContext(Dispatchers.Main){
-                for(x in 0..100){
-                    number=x
-                    job()
-                }
+        mJob = CoroutineScope(Dispatchers.Default).launch {
+            for (x in 0..100) {
+                number = x
+                job()
             }
-
         }
-
-
     }
-
+    fun stopTheProgress(){
+        mJob!!.cancel()
+    }
     override fun onBind(intent: Intent?): IBinder? {
         return mBinder
     }
@@ -54,6 +52,7 @@ class MyService: Service() {
         super.onDestroy()
         Toast.makeText(this, "Service Stopped", Toast.LENGTH_LONG).show()
     }
+
     inner class MyBinder : Binder() {
         // Return this instance of MyService so clients can call public methods
         val service: MyService
@@ -61,11 +60,12 @@ class MyService: Service() {
                 this@MyService
     }
 
-    suspend fun job(){
+    suspend fun job() {
         delay(350)
         Status.postValue(number)
 
     }
+
     private fun getShow(): LiveData<Int> {
         if (Status == null) {
             Status = MutableLiveData()
@@ -73,9 +73,11 @@ class MyService: Service() {
         }
         return Status as MutableLiveData<Int>
     }
+
     private fun loadShow() {
         Status!!.value = 0
     }
+
     @RequiresApi(Build.VERSION_CODES.O)
     fun show_Notification() {
         val intent = Intent(applicationContext, MainActivity::class.java)
@@ -93,12 +95,10 @@ class MyService: Service() {
         val notificationManager =
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(notificationChannel)
-        startForeground(1,notification)
+        startForeground(1, notification)
         notificationManager.notify(1, notification)
 
     }
-
-
 
 
 }

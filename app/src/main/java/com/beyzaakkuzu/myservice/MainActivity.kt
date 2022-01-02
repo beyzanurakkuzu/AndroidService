@@ -44,6 +44,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             }
             R.id.buttonStop ->{
                 stopService(Intent(this, MyService::class.java))
+                unbindService(serviceConnection)
+                mService!!.stopTheProgress()
             }
 
         }
